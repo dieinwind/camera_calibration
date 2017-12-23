@@ -8,6 +8,8 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "Settings.h"
+
 
 //ÆÁ±ÎÄÚ´æÐ¹Â©¾¯¸æ
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -22,7 +24,7 @@ using namespace cv;
 int main()
 {
 	int mode = 0;
-	
+	Settings 
 	switch (mode)
 	{
 
