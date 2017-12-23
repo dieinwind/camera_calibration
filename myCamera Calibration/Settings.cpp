@@ -1,9 +1,7 @@
 #include "Settings.h"
 
 
-Settings::Settings()
-{
-}
+
 
 
 Settings::~Settings()
@@ -32,6 +30,7 @@ void Settings::write(FileStorage& fs) const                        //Write seria
 		<< "Input" << input
 		<< "}";
 }
+
 
 void Settings::read(const FileNode& node)                          //Read serialization for this class
 {

@@ -24,14 +24,26 @@ public:
 	enum InputType { INVALID, CAMERA, VIDEO_FILE, IMAGE_LIST };
 
 public:
-	Settings();
 	~Settings();
 	void write(FileStorage& fs) const;
 	void read(const FileNode& node);
 	void interprate();
 	Mat nextImage();
 private:
-	static bool readStringList(const string& filename, vector<string>& l);
+	static bool readStringList(const string& filename, vector<string>& l)
+	{
+		l.clear();
+		FileStorage fs(filename, FileStorage::READ);
+		if (!fs.isOpened())
+			return false;
+		FileNode n = fs.getFirstTopLevelNode();
+		if (n.type() != FileNode::SEQ)
+			return false;
+		FileNodeIterator it = n.begin(), it_end = n.end();
+		for (; it != it_end; ++it)
+			l.push_back((string)*it);
+		return true;
+	}
 
 public:
 	Size boardSize;            // The size of the board -> Number of items by width and height
