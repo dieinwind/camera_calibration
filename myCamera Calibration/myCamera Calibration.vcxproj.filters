@@ -21,6 +21,9 @@
     <ClCompile Include="Settings.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="calibration.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="left01.jpg">
@@ -70,6 +73,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Settings.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="calibration.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

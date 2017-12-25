@@ -28,7 +28,7 @@ void Settings::write(FileStorage& fs) const                        //Write seria
 		<< "Input_FlipAroundHorizontalAxis" << flipVertical
 		<< "Input_Delay" << delay
 		<< "Input" << input
-		<< "}";
+		<< "}";  
 }
 
 

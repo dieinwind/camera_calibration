@@ -2,6 +2,7 @@
 #include <sstream>
 #include <time.h>
 #include <stdio.h>
+#include <conio.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -9,6 +10,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "Settings.h"
+#include "calibration.h"
 
 
 //屏蔽内存泄漏警告
@@ -21,6 +23,8 @@ using namespace cv;
 
 enum { DETECTION = 0, CAPTURING = 1, CALIBRATED = 2 };
 
+
+//FileStorage重载的>>的实现
 static void read(const FileNode& node, Settings& x, const Settings& default_value = Settings())
 {
 	if (node.empty())
@@ -29,13 +33,46 @@ static void read(const FileNode& node, Settings& x, const Settings& default_valu
 		x.read(node);
 }
 
+
+Mat view;
+Mat viewDrawed;
+Calibration calibration;
+Settings s;
+bool isEnd = false;
+//响应鼠标动作
+void on_mouse(int event, int x, int y, int flags, void* ustc)
+{
+	if (event == CV_EVENT_LBUTTONDBLCLK)    //左键双击
+	{
+		view = s.nextImage();
+		if (!view.empty())
+		{
+			cout << "RUN FOUND   ";
+			bool found = calibration.findFeaturePoints(view, viewDrawed);
+			cout << "  found =  " << found << "  " << endl;
+			if (!viewDrawed.empty())
+			{
+				imshow("Drawed", viewDrawed);
+			}
+		}
+		else
+		{
+			isEnd = true;
+		}
+		
+			
+	}
+}
+
 int main()
 {
-
-	Settings s;
+	
+	const Scalar RED(0, 0, 255), GREEN(0, 255, 0);
 	const string inputSettingsFile = "in_VID5.xml";
 	FileStorage fs(inputSettingsFile, FileStorage::READ);
 	const char ESC_KEY = 27;
+	const char ENTER = 13;
+	const char DOWN_KEY = 40;
 	//检查文件是否打开
 	if (!fs.isOpened())
 	{
@@ -53,43 +90,41 @@ int main()
 		return -1;
 	}
 
-	int mode = 0;
-	Size imageSize;
+	calibration.setParameters(s.boardSize,s.squareSize, s.flag);
 
+	int mode = 0;
+	bool found;
+	Size imageSize;
+	vector<Point2f> pointBuf;
+	char key;
+
+	//创建窗口
+	namedWindow("show");
+	cvSetMouseCallback("show", on_mouse, 0);
+	VideoCapture cap(0);
+	Mat frame;
 	while (true)
 	{
-		Mat view;
-		switch (mode)
-		{
-		case 0:
-			cout << "DETECTION" << endl;
-			view = s.nextImage();
-			break;
-		case 1:
-			cout << "CALIBRATED" << endl;
-			break;
-		}
 
-		imageSize = view.size();
-		vector<Point2f> pointBuf;
-		bool found;
-
-		//查找CHESSBOARD
-		found = findChessboardCorners(view, s.boardSize, pointBuf,
-			CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
+		cap>>frame;
+		string msg = "out put test";
+		int baseLine = 0;
+		Size textSize = getTextSize(msg, 1, 1, 1, &baseLine);
+		Point textOrigin(view.cols - 2 * textSize.width - 10, view.rows - 2 * baseLine - 10);
 		
-		if (found) //如果找到了正确的Chess board
+		putText(view, msg, textOrigin, 1, 1, mode == CALIBRATED ? GREEN : RED);
+		
+		if (isEnd == true)
 		{
-			//提高焦点坐标的精度
-			Mat viewGray;
-			cvtColor(view, viewGray, COLOR_BGR2GRAY);
-			cornerSubPix(viewGray, pointBuf, Size(11, 11), Size(-1, -1), TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
-			//画出角点
-			drawChessboardCorners(view, s.boardSize, Mat(pointBuf), found);
+			calibration.runCalibrationAndSave("out.xml");
+			Mat image = imread("left01.jpg");
+			Mat distorted;
+			calibration.Undistort(image, distorted);
+			imshow("left01", distorted);
 		}
-		imshow("Image View", view);
-		char key = (char)waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
+
+		imshow("show", frame);
+		key = (char)waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
 
 		if (key == ESC_KEY)
 			break;
